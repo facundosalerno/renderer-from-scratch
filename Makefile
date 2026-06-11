@@ -6,19 +6,19 @@ SRCS    = $(wildcard src/*.c)
 OBJS    = $(SRCS:src/%.c=build/%.o)
 DEPS    = $(SRCS:src/%.c=build/%.d)
 
-.PHONY: all run clean
+.PHONY: build run clean
 
-all: $(TARGET)
+build: $(TARGET)
 
-$(TARGET): $(OBJS) | build
+$(TARGET): $(OBJS) | mkdir_build
 	$(CC) $(CFLAGS) -o $@ $^ -lm
 
-build/%.o: src/%.c | build
+build/%.o: src/%.c | mkdir_build
 	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
 -include $(DEPS)
 
-build:
+mkdir_build:
 	mkdir -p build
 
 run: $(TARGET)

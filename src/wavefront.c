@@ -29,8 +29,10 @@ Model wavefront_read(const char* filename){
         strcpy(line_copy, content[i]);
         
         char* token = strtok(line_copy, " ");
-        if(token == NULL)
+        if(token == NULL){
+            free(line_copy);
             continue;
+        }
 
         if(strcmp(token, "v") == 0){
             char* raw_x = strtok(NULL, " ");

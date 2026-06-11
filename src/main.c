@@ -10,8 +10,8 @@
 #include "color.h"
 
 int main(){
-    for(int g=0; g<=0; g++){
-        Model model = wavefront_read("input/diablo3_pose.obj");
+    for(int g=0; g<=365; g++){
+        Model model = wavefront_read("input/head.obj");
         if(strcmp(model.error, "") != 0){
             printf("error loading model: %s", model.error);
             return 0;
@@ -38,12 +38,14 @@ int main(){
             // Generalmente los wavefront vienen en un rango de -1 a 1 por lo que puedo asumir eso como minimos y maximos absolutos
             // por lo tanto, sumar 1 a los componentes los deberia volver positivos
             // TODO esta ultima invariante puede generar bugs pero por ahora sirve
-            // Por ultimo, lo multiplico por 256 tentativo para "escalar" la imagen
-            float delta = sin(g)*v.z; //(sqrt(2)*v.z)/2;
-            projected[i].x = round(1024*(1 + v.x + delta));
-            projected[i].y = round(1024*(1 + v.y + delta));
+            // Por ultimo, lo multiplico por width y height para "escalar" la imagen
+            // Update: la guia divide por 2: actualmente el ancho de la imagen es 2 (de -1 a 1 o de 0 a 2, cualquier opcion es lo mismo, la segunda opcion
+            // es la que nos queda despues de haber sumado el 1). Para escalar una imagen de ancho 2 a ancho width regla de 3: si 2 es width -> x es x*width/2
+            // Misma logica para el height al cual tambien le sumamos 1.
+            float delta = sin(g * 3.14159265358979 / 180.0)*v.z;
+            projected[i].x = round(width * (1.0 + v.x + delta) / 2.0);
+            projected[i].y = round(height * (1.0 + v.y + delta) / 2.0);
             projected[i].z = 0;
-            //printf("Punto X=%f->%d Y=%f->%d Z=%f->0\n", v.x, projected[i].x, v.y, projected[i].y, v.z);
         }
 
 
@@ -70,7 +72,7 @@ int main(){
         }
 
         char filename[64];
-        snprintf(filename, sizeof(filename), "output/diablo2_%dg.tga", g);
+        snprintf(filename, sizeof(filename), "output/head_%dg.tga", g);
         tga_write(framebuffer, filename, true, false);
 
         free(projected);
