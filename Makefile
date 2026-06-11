@@ -2,24 +2,27 @@ CC      = gcc
 CFLAGS  = -Wall -Wextra -O2 -std=c11
 TARGET  = build/renderer
 
-SRCS    = $(wildcard *.c)
-OBJS    = $(SRCS:%.c=build/%.o)
-DEPS    = $(SRCS:%.c=build/%.d)
+SRCS    = $(wildcard src/*.c)
+OBJS    = $(SRCS:src/%.c=build/%.o)
+DEPS    = $(SRCS:src/%.c=build/%.d)
 
-.PHONY: all clean
+.PHONY: all run clean
 
 all: $(TARGET)
 
 $(TARGET): $(OBJS) | build
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $^ -lm
 
-build/%.o: %.c | build
+build/%.o: src/%.c | build
 	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
 -include $(DEPS)
 
 build:
 	mkdir -p build
+
+run: $(TARGET)
+	./$(TARGET)
 
 clean:
 	rm -rf build
