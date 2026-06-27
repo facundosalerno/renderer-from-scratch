@@ -9,6 +9,8 @@
 #include "wavefront.h"
 #include "color.h"
 
+// https://haqr.eu/tinyrenderer/bresenham/#homework-wireframe-rendering
+
 int main(){
     for(int g=0; g<=365; g++){
         Model model = wavefront_read("input/head.obj");
@@ -17,8 +19,8 @@ int main(){
             return 0;
         }
 
-        int width = 2048;
-        int height = 2048;
+        int width = 512;
+        int height = 512;
         TGAImage* framebuffer = tga_create(width, height, TGA_RGB);
 
         Point* projected = malloc(model.v_len * sizeof(Point));
