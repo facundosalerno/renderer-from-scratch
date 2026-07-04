@@ -11,12 +11,16 @@
 
 // https://haqr.eu/tinyrenderer/bresenham/#homework-wireframe-rendering
 
-int main(){
+
+
+
+
+void bresenhams_line_drawing(){
     for(int g=0; g<=365; g++){
         Model model = wavefront_read("input/head.obj");
         if(strcmp(model.error, "") != 0){
             printf("error loading model: %s", model.error);
-            return 0;
+            return;
         }
 
         int width = 512;
@@ -81,37 +85,82 @@ int main(){
         tga_free(framebuffer);
         wavefront_free(&model);
     }
-    return 0;
-    /*
-    TGAImage* framebuffer = tga_create(64, 64, TGA_RGB);
+    return;
+}
 
-    Point a = {7, 3, 0};
-    Point b = {12, 37, 0};
-    Point c = {62, 53, 0};
 
-    Line l1 = line(a, b);
-    Line l2 = line(c, b);
-    Line l3 = line(c, a);
-    Line l4 = line(a, c);
 
-    tga_draw_line(framebuffer, l1, blue);
-    tga_draw_line(framebuffer, l2, green);
-    tga_draw_line(framebuffer, l3, yellow);
-    tga_draw_line(framebuffer, l4, red);
 
-    line_free(l1);
-    line_free(l2);
-    line_free(l3);
-    line_free(l4);
 
-    tga_set(framebuffer, a, white);
-    tga_set(framebuffer, b, white);
-    tga_set(framebuffer, c, white);
+void triangle_rasterization(){
+    TGAImage* framebuffer = tga_create(128, 126, TGA_RGB);
 
-    tga_write(framebuffer, "output/framebuffer.tga", true, false);
+    // N triangulos cada uno con sus 3 vertices
+    Point triangles[][3] = {
+        {{.x=7, .y=45}, {.x=35, .y=100}, {.x=45, .y=60}},
+        {{.x=120, .y=35}, {.x=90, .y=5}, {.x=45, .y=110}},
+        {{.x=115, .y=83}, {.x=80, .y=90}, {.x=85, .y=120}},
+    };
 
+    Color colors[] = {red, white, green};
+
+    for(int i=0; i<3; i++){
+        Point* points = triangles[i];
+        Color color = colors[i];
+        Triangle t = triangle(points[0], points[1], points[2]);
+        tga_draw_triangle(framebuffer, t, color);
+
+
+        Line l1 = t.lines[0];
+        Line l2 = t.lines[1];
+        Line l3 = t.lines[2];
+        //printf("Vertices para empezar a pintar %d,%d y %d,%d\n", l1.points[0].x, l1.points[0].y, l2.points[0].x, l2.points[0].y);
+        // Se queda con la linea mas larga
+        Line* ll = longest(longest(&l1, &l2), &l3);
+        Line lines[3] = {l1, l2, l3};
+        
+        for(unsigned int j=0; j<ll->len; ++j){
+            Point p1 = ll->points[j];
+            // Por cada punto de la linea mas larga, determino mi condicion de corte. Esto es, dejar fija
+            // alguna coordenada X o Y y generar una recta entre la coordenada movil y otro lado del triangulo,
+            // es decir, otra linea.
+            // Como no se exactamente cual de todas las lineas fue la mas larga, pregunto para cada una
+            for(int k=0; k<3; ++k){
+                Line lo = lines[k];
+
+                if(!equals(ll, &lo)){
+                    // Necesito determinar si dejar fija la coordenada X o Y. Esto es, probar para cada coordenada X e Y
+                    // del punto actual si forma parte de l1.
+                    
+                    // Antes de dejar fijo Y necesito comprobar que forma parte del triangulo en lo. Es decir, p1 lo obtuvimos de ll
+                    // pero aun no chequeamos que tambien lo tenga lo
+                    if(contains_y(&lo, p1.y)){
+                        // Si dejo fijo Y, necesito despejar el X en l1. Utilizo p.y como punto compartido entre ll y l1
+                        // dado que justamente queda fija la coordenada en Y (x=(y-b)/m)
+                        int x = (p1.y - lo.b) / lo.m;
+                        Point p2 = {.x = x, .y = p1.y};
+                        tga_draw_line(framebuffer, line(p1, p2), color);
+                    }else if(contains_x(&lo, p1.x)){
+                        // Lo mismo pero dejo fija la coordenada en X (y=mx+b)
+                        int y = lo.m * p1.x + lo.b;
+                        Point p2 = {.x = p1.x, .y = y};
+                        tga_draw_line(framebuffer, line(p1, p2), color);
+                    }
+                }
+            }
+        }
+        triangle_free(t);
+    }
+    tga_write(framebuffer, "output/triangles.tga", true, false);
     tga_free(framebuffer);
-    framebuffer = NULL;
+    return;
+}
+
+
+
+
+
+int main(){
+    triangle_rasterization();
     return 0;
-    */
 }

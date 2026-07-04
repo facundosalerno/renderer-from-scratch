@@ -51,3 +51,4 @@ Color tga_get(const TGAImage* fb, Point point);
 void tga_set(TGAImage* fb, Point point, Color c);
 
 void tga_draw_line(TGAImage* fb, Line line, Color color);
+void tga_draw_triangle(TGAImage* fb, Triangle triangle, Color color);

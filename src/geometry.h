@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stdbool.h>
 #define SWAP(T, a, b) do { T _tmp = (a); (a) = (b); (b) = _tmp; } while(0)
 
 typedef struct {
@@ -9,8 +10,25 @@ typedef struct {
 typedef struct {
     Point* points;
     unsigned int len;
+    // y = mx + b
+    float m; // Pendiente
+    float b; // Ordenada
 } Line;
 
+typedef struct {
+    Line lines[3];
+} Triangle;
 
-Line line(Point a, Point b);
-void line_free(Line line);
+
+Line line(Point, Point);
+void line_free(Line);
+
+Line* longest(Line*, Line*);
+bool equals(Line*, Line*);
+bool contains(Line*, Point*);
+bool contains_x(Line*, int);
+bool contains_y(Line*, int);
+bool contains_z(Line*, int);
+
+Triangle triangle(Point, Point, Point);
+void triangle_free(Triangle);

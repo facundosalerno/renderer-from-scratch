@@ -248,3 +248,9 @@ void tga_draw_line(TGAImage* fb, Line line, Color color){
         tga_set(fb, line.points[i], color);
     }
 }
+
+void tga_draw_triangle(TGAImage* fb, Triangle triangle, Color color){
+    tga_draw_line(fb, triangle.lines[0], color);
+    tga_draw_line(fb, triangle.lines[1], color);
+    tga_draw_line(fb, triangle.lines[2], color);
+}
