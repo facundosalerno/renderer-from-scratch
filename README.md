@@ -1,6 +1,8 @@
 # renderer-from-scratch
 
-Software renderer implemented in C from scratch — rasterization, z-buffering, shading, and more, following the [tinyrenderer](https://haqr.eu/tinyrenderer/) guide.
+Work in progress. A software renderer in C, following the [tinyrenderer](https://haqr.eu/tinyrenderer/).
+
+![sample render](output/diablo_animation.gif)
 
 ## Build
 
