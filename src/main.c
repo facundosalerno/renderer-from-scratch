@@ -104,56 +104,86 @@ void triangle_rasterization(){
 
     Color colors[] = {red, white, green};
 
+    // Algoritmo Scanline rendering:
+    // 1. Ordeno los vertices de menor a mayor (en funcion de la coordenada Y): esto es para establecer el orden del render, siempre va a ser de abajo hacia arriba. Graficamente siempre me va a quedar el segmento desde 'a' hasta 'c' como el mas largo, mientras que los segmentos de 'a' a 'b' y 'b' a 'c' como los mas cortos.
+    // 2. Rasterizo los bordes izquierdos y derechos para cada punto de 'y': en este caso rasterizacion se debe entender como encontrar los puntos de 'x' de forma analitica tal que pueda trazar la linea horizontal que los una. Esto para cada punto de 'y' incrementando de a una unidad hasta el tope.
+    // 3. Dibujo la linea horizontal a partir de los vertices encontrados en el paso 2
+
+    
+    // Por cada triangulo
     for(int i=0; i<3; i++){
         Point* points = triangles[i];
         Color color = colors[i];
-        Triangle t = triangle(points[0], points[1], points[2]);
-        tga_draw_triangle(framebuffer, t, color);
 
+        Point a = triangles[i][0];
+        Point b = triangles[i][1];
+        Point c = triangles[i][2];
 
-        Line l1 = t.lines[0];
-        Line l2 = t.lines[1];
-        Line l3 = t.lines[2];
-        //printf("Vertices para empezar a pintar %d,%d y %d,%d\n", l1.points[0].x, l1.points[0].y, l2.points[0].x, l2.points[0].y);
-        // Se queda con la linea mas larga
-        Line* ll = longest(longest(&l1, &l2), &l3);
-        Line lines[3] = {l1, l2, l3};
-        
-        for(unsigned int j=0; j<ll->len; ++j){
-            Point p1 = ll->points[j];
-            // Por cada punto de la linea mas larga, determino mi condicion de corte. Esto es, dejar fija
-            // alguna coordenada X o Y y generar una recta entre la coordenada movil y otro lado del triangulo,
-            // es decir, otra linea.
-            // Como no se exactamente cual de todas las lineas fue la mas larga, pregunto para cada una
-            for(int k=0; k<3; ++k){
-                Line lo = lines[k];
+        // 1. Para el ordenado uso bubblesort adhoc: establezco el orden ascendente a < b < c
+        if(a.y > b.y){
+            SWAP(int, a.x, b.x);
+            SWAP(int, a.y, b.y);
+        }
+        if(a.y > c.y){
+            SWAP(int, a.x, c.x);
+            SWAP(int, a.y, c.y);
+        }
+        if(b.y > c.y){
+            SWAP(int, b.x, c.x);
+            SWAP(int, b.y, c.y);
+        }
 
-                if(!equals(ll, &lo)){
-                    // Necesito determinar si dejar fija la coordenada X o Y. Esto es, probar para cada coordenada X e Y
-                    // del punto actual si forma parte de l1.
-                    
-                    // Antes de dejar fijo Y necesito comprobar que forma parte del triangulo en lo. Es decir, p1 lo obtuvimos de ll
-                    // pero aun no chequeamos que tambien lo tenga lo
-                    if(contains_y(&lo, p1.y)){
-                        // Si dejo fijo Y, necesito despejar el X en l1. Utilizo p.y como punto compartido entre ll y l1
-                        // dado que justamente queda fija la coordenada en Y (x=(y-b)/m)
-                        int x = (p1.y - lo.b) / lo.m;
-                        Point p2 = {.x = x, .y = p1.y};
-                        tga_draw_line(framebuffer, line(p1, p2), color);
-                    }else if(contains_x(&lo, p1.x)){
-                        // Lo mismo pero dejo fija la coordenada en X (y=mx+b)
-                        int y = lo.m * p1.x + lo.b;
-                        Point p2 = {.x = p1.x, .y = y};
-                        tga_draw_line(framebuffer, line(p1, p2), color);
-                    }
-                }
+        // A partir de aca los vertices 'a', 'b' y 'c' pueden ser interpretados mas intuitivamente ya que estan ordenados: 'a' es el de mas abajo, no importa cual era antes. 'b' es el del medio. 'c' es el de mas arriba en la imagen.
+        // DEBUG: descomentar esto para ver los segmentos importantes en colores
+        //tga_draw_line(framebuffer, line(a, b), green);
+        //tga_draw_line(framebuffer, line(b, c), green);
+        //tga_draw_line(framebuffer, line(a, c), red);
+
+        // 2. Aca ocurre el 50% del paso 2: encontrar para cada punto de 'y' (solo del segmento desde 'a' hasta 'b') cuales serian los puntos en 'x' del segmento izquiero y del segmento derecho. En principio no se cual es cual pero si se que uno tiene que ser el segmento 'a' y 'b', y otro tiene que ser el 'a' y 'c' ya que obligatoriamente 'a' es el mas chico (por que estan ordenados desde el paso 1)
+        // En esta parte solo se pinta la primer mitad del triangulo
+
+        // Primero chequea que el borde de abajo no sea degenerado: si 'a' y 'b' tienen la misma componente en 'y' significa que no hay "altura" entre ellos por lo tanto no hay nada que rellenar. Es como si el triangulo no tuviera "parte de abajo". Esta relacion no podria darse con 'c' ya que este debe ser obligatoriamente mayor a 'b' ya que si no lo fuese, la figura seria una linea recta en lugar de un triangulo (a.y = b.y = c.y).
+        if(a.y != b.y){
+
+            for(int y=a.y; y<=b.y; y++){
+                // Usando exactamente la misma formula que en 'Bresenham’s line drawing' podemos despejar 'x' a partir de 'y'.
+                // Para dos puntos genericos 'a' y 'b' es: x(y) = ax + (y - ay) * (bx - ax) / (by - ay)
+
+                // Calculo 'x1' para la linea formada entre 'a' y 'b'
+                int x1 = a.x + (y - a.y) * (b.x - a.x) / (b.y - a.y);
+                // Calculo 'x2' para la linea formada entre 'a' y 'c'
+                int x2 = a.x + (y - a.y) * (c.x - a.x) / (c.y - a.y);
+                Point px1 = {.x=x1, .y=y};
+                Point px2 = {.x=x2, .y=y};
+                Line horizontal_line = line(px1, px2);
+                tga_draw_line(framebuffer, horizontal_line, color);
+                line_free(horizontal_line);
             }
         }
-        triangle_free(t);
+
+        // 2. Aca ocurre el 50% restante del paso 2: analogamente se pinta la parte restante
+
+        // Mismo chequeo que antes pero midiendo la altura entre 'b' y 'c'
+        if(b.y != c.y){
+
+            // Aca esta representada la parte restante del triangulo: va de 'b' a 'c' en lugar de 'a' a 'b'
+            for(int y=b.y; y<=c.y; y++){
+                // Ojo con el orden de los segmentos en esta parte. si bien es matematicamente lo mismo tomar de 'b' a 'c' o de 'c' a 'b',
+                // 'x1' para segmento ['b', 'c']
+                int x1 = b.x + (y - b.y) * (c.x - b.x) / (c.y - b.y);
+                // 'x2' para segmento ['a', 'c']
+                int x2 = a.x + (y - a.y) * (c.x - a.x) / (c.y - a.y);
+                Point px1 = {.x=x1, .y=y};
+                Point px2 = {.x=x2, .y=y};
+                Line horizontal_line = line(px1, px2);
+                tga_draw_line(framebuffer, horizontal_line, color);
+                line_free(horizontal_line);
+            }
+        }
     }
+
     tga_write(framebuffer, "output/triangles.tga", true, false);
     tga_free(framebuffer);
-    return;
 }
 
 
