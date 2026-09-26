@@ -17,6 +17,8 @@ typedef struct {
 
 typedef struct {
     Line lines[3];
+    int n_area;
+    Line* area;
 } Triangle;
 
 
@@ -30,5 +32,5 @@ bool contains_x(Line*, int);
 bool contains_y(Line*, int);
 bool contains_z(Line*, int);
 
-Triangle triangle(Point, Point, Point);
+Triangle triangle(Point, Point, Point, bool fill);
 void triangle_free(Triangle);

@@ -254,3 +254,11 @@ void tga_draw_triangle(TGAImage* fb, Triangle triangle, Color color){
     tga_draw_line(fb, triangle.lines[1], color);
     tga_draw_line(fb, triangle.lines[2], color);
 }
+
+void tga_fill_triangle(TGAImage* fb, Triangle triangle, Color color){
+    if(triangle.area != NULL && triangle.area > 0){
+        for(int i=0; i<triangle.n_area; i++){
+            tga_draw_line(fb, triangle.area[i], color);
+        }   
+    }
+}
